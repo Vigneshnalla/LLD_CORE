@@ -1,0 +1,9 @@
+package main.java.com.vignesh.librarymanagement.enums;
+
+public enum BookStatus {
+	AVAILABLE,
+	LOANED,
+	LOST,
+	DAMAGED,
+	REFERENCE_ONLY
+}

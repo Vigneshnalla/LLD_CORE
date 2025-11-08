@@ -1,0 +1,224 @@
+package main.java.com.vignesh.librarymanagement;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+
+import main.java.com.vignesh.librarymanagement.enums.AccountStatus;
+import main.java.com.vignesh.librarymanagement.enums.BookFormat;
+import main.java.com.vignesh.librarymanagement.enums.BookStatus;
+import main.java.com.vignesh.librarymanagement.model.book.Author;
+import main.java.com.vignesh.librarymanagement.model.book.BookItem;
+import main.java.com.vignesh.librarymanagement.model.book.Rack;
+import main.java.com.vignesh.librarymanagement.model.people.Address;
+import main.java.com.vignesh.librarymanagement.model.people.Librarian;
+import main.java.com.vignesh.librarymanagement.model.people.LibraryCard;
+import main.java.com.vignesh.librarymanagement.model.people.Person;
+
+public class LibraryManagementSystemTest {
+	 
+	public static void main(String[] args) {
+		LibraryManagementSystem libraryManagementSystem = LibraryManagementSystem.getInstance();
+		
+		Address address = new Address();
+		address.setStreetNo("5-106");
+		address.setCity("KUKATPALLY");
+		address.setState("TELANGANA");
+		address.setCountry("INDIA");
+		address.setZipCode("500001");
+		
+		libraryManagementSystem.setAddress(address);
+		
+		Librarian librarian = new Librarian(libraryManagementSystem);
+		
+		 // Librarian Address
+        Address libAddress = new Address();
+        libAddress.setStreetNo("9-222");
+        libAddress.setCity("Thoraipakkam");
+        libAddress.setState("Chennai");
+        libAddress.setCountry("India");
+        libAddress.setZipCode("600097");
+
+        // Librarian Person Details
+        Person p = new Person();
+        p.setAddress(libAddress);
+        
+        p.setEmail("bob999@gmail.com");
+        p.setName("Bob Frage");
+        p.setPhoneNo("9876543210");
+
+        // Create Library Card
+        LibraryCard card = new LibraryCard();
+        card.setCardNo("CARD-001");
+        card.setBarcode("BAR-001");
+        card.setActive(true);
+        card.setIssuedAt(new Date());
+		
+        librarian.setId("L001");
+        librarian.setPassword("securePassword@123");
+        librarian.setJoiningDate(new Date());
+        librarian.setPerson(p);
+        librarian.setAccountStatus(AccountStatus.ACTIVE);
+        librarian.setLibraryCard(card);
+        
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.YEAR, 1); // valid for 1 year
+        card.setExpiryDate(cal.getTime());
+
+        List<BookItem> books = createBookItems();
+        
+        libraryManagementSystem.addLibrarian(librarian);
+
+        for(BookItem book : books) librarian.addBookItem(book);
+        
+        
+        System.out.println(libraryManagementSystem);
+        
+	
+		
+	}
+	public static List<BookItem> createBookItems() {
+	    
+	    // ---------- AUTHORS ----------
+	    Author a1 = new Author("A001", "J.K. Rowling",
+	        "British author best known for writing the Harry Potter fantasy series.",
+	        new GregorianCalendar(1965, Calendar.JULY, 31).getTime(),
+	        "British");
+
+	    Author a2 = new Author("A002", "George R.R. Martin",
+	        "American novelist and short-story writer, known for A Song of Ice and Fire.",
+	        new GregorianCalendar(1948, Calendar.SEPTEMBER, 20).getTime(),
+	        "American");
+
+	    Author a3 = new Author("A003", "Dan Brown",
+	        "American author known for his thriller novels, including The Da Vinci Code.",
+	        new GregorianCalendar(1964, Calendar.JUNE, 22).getTime(),
+	        "American");
+
+	    Author a4 = new Author("A004", "Paulo Coelho",
+	        "Brazilian lyricist and novelist, best known for The Alchemist.",
+	        new GregorianCalendar(1947, Calendar.AUGUST, 24).getTime(),
+	        "Brazilian");
+
+	    Author a5 = new Author("A005", "J.R.R. Tolkien",
+	        "English writer and academic, author of The Hobbit and The Lord of the Rings.",
+	        new GregorianCalendar(1892, Calendar.JANUARY, 3).getTime(),
+	        "British");
+
+	    Author a6 = new Author("A006", "Yuval Noah Harari",
+	        "Israeli historian known for Sapiens: A Brief History of Humankind.",
+	        new GregorianCalendar(1976, Calendar.FEBRUARY, 24).getTime(),
+	        "Israeli");
+
+	    Author a7 = new Author("A007", "Agatha Christie",
+	        "British writer known for detective novels featuring Hercule Poirot.",
+	        new GregorianCalendar(1890, Calendar.SEPTEMBER, 15).getTime(),
+	        "British");
+
+	    Author a8 = new Author("A008", "Stephen King",
+	        "American author of horror, supernatural fiction, and suspense.",
+	        new GregorianCalendar(1947, Calendar.SEPTEMBER, 21).getTime(),
+	        "American");
+
+	    Author a9 = new Author("A009", "Chetan Bhagat",
+	        "Indian author and columnist known for novels about urban life.",
+	        new GregorianCalendar(1974, Calendar.APRIL, 22).getTime(),
+	        "Indian");
+
+	    Author a10 = new Author("A010", "Arthur Conan Doyle",
+	        "British writer best known for creating Sherlock Holmes.",
+	        new GregorianCalendar(1859, Calendar.MAY, 22).getTime(),
+	        "British");
+
+	    // ---------- RACK LOCATIONS ----------
+	    Rack rack1 = new Rack("R1", "Fiction-A1");
+	    Rack rack2 = new Rack("R2", "Fantasy-B1");
+	    Rack rack3 = new Rack("R3", "Mystery-C1");
+	    Rack rack4 = new Rack("R4", "Philosophy-D1");
+	    Rack rack5 = new Rack("R5", "History-E1");
+	    Rack rack6 = new Rack("R6", "Thriller-F1");
+	    Rack rack7 = new Rack("R7", "Biography-G1");
+	    Rack rack8 = new Rack("R8", "Science-H1");
+	    Rack rack9 = new Rack("R9", "Romance-I1");
+	    Rack rack10 = new Rack("R10", "Classic-J1");
+
+	    // ---------- BOOK ITEMS ----------
+	    List<BookItem> books = new ArrayList<>();
+
+	    books.add(new BookItem("Harry Potter and the Sorcerer’s Stone", "ISBN001",
+	        new GregorianCalendar(1997, Calendar.JUNE, 26).getTime(),
+	        "Fantasy", List.of(a1),
+	        "The first book in the Harry Potter series.",
+	        "English", 309, "BC001", false, 499.0,
+	        BookStatus.AVAILABLE, BookFormat.HARDCOVER, rack1));
+
+	    books.add(new BookItem("A Game of Thrones", "ISBN002",
+	        new GregorianCalendar(1996, Calendar.AUGUST, 6).getTime(),
+	        "Fantasy", List.of(a2),
+	        "First novel in A Song of Ice and Fire series.",
+	        "English", 694, "BC002", false, 699.0,
+	        BookStatus.AVAILABLE, BookFormat.HARDCOVER, rack2));
+
+	    books.add(new BookItem("The Da Vinci Code", "ISBN003",
+	        new GregorianCalendar(2003, Calendar.MARCH, 18).getTime(),
+	        "Thriller", List.of(a3),
+	        "A mystery thriller novel that explores secret societies and art history.",
+	        "English", 489, "BC003", false, 399.0,
+	        BookStatus.AVAILABLE, BookFormat.PAPERBACK, rack3));
+
+	    books.add(new BookItem("The Alchemist", "ISBN004",
+	        new GregorianCalendar(1988, Calendar.MAY, 1).getTime(),
+	        "Philosophy", List.of(a4),
+	        "An allegorical novel about pursuing one’s dreams.",
+	        "English", 197, "BC004", false, 299.0,
+	        BookStatus.AVAILABLE, BookFormat.PAPERBACK, rack4));
+
+	    books.add(new BookItem("The Lord of the Rings", "ISBN005",
+	        new GregorianCalendar(1954, Calendar.JULY, 29).getTime(),
+	        "Fantasy", List.of(a5),
+	        "An epic high-fantasy novel.",
+	        "English", 1178, "BC005", false, 899.0,
+	        BookStatus.AVAILABLE, BookFormat.HARDCOVER, rack5));
+
+	    books.add(new BookItem("Sapiens: A Brief History of Humankind", "ISBN006",
+	        new GregorianCalendar(2011, Calendar.JUNE, 4).getTime(),
+	        "History", List.of(a6),
+	        "Explores the evolution of humankind from ancient times.",
+	        "English", 498, "BC006", false, 499.0,
+	        BookStatus.AVAILABLE, BookFormat.PAPERBACK, rack6));
+
+	    books.add(new BookItem("Murder on the Orient Express", "ISBN007",
+	        new GregorianCalendar(1934, Calendar.JANUARY, 1).getTime(),
+	        "Mystery", List.of(a7),
+	        "A classic detective novel featuring Hercule Poirot.",
+	        "English", 256, "BC007", false, 350.0,
+	        BookStatus.AVAILABLE, BookFormat.PAPERBACK, rack7));
+
+	    books.add(new BookItem("The Shining", "ISBN008",
+	        new GregorianCalendar(1977, Calendar.JANUARY, 28).getTime(),
+	        "Horror", List.of(a8),
+	        "A psychological horror novel set in a haunted hotel.",
+	        "English", 447, "BC008", false, 450.0,
+	        BookStatus.AVAILABLE, BookFormat.PAPERBACK, rack8));
+
+	    books.add(new BookItem("2 States", "ISBN009",
+	        new GregorianCalendar(2009, Calendar.OCTOBER, 8).getTime(),
+	        "Romance", List.of(a9),
+	        "A love story between two people from different Indian states.",
+	        "English", 270, "BC009", false, 299.0,
+	        BookStatus.AVAILABLE, BookFormat.PAPERBACK, rack9));
+
+	    books.add(new BookItem("Sherlock Holmes: The Complete Novels", "ISBN010",
+	        new GregorianCalendar(1892, Calendar.OCTOBER, 14).getTime(),
+	        "Detective", List.of(a10, a7),
+	        "A collection of classic detective stories featuring Sherlock Holmes.",
+	        "English", 1122, "BC010", false, 599.0,
+	        BookStatus.AVAILABLE, BookFormat.HARDCOVER, rack10));
+
+	    return books;
+	}
+
+
+}

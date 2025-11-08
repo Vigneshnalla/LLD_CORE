@@ -1,0 +1,5 @@
+package main.java.com.vignesh.librarymanagement.enums;
+
+public class PaymentStatus {
+
+}

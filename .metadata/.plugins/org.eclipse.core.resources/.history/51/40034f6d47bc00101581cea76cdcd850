@@ -1,0 +1,47 @@
+package main.java.com.vignesh.librarymanagement;
+
+import java.util.Date;
+
+import main.java.com.vignesh.librarymanagement.enums.AccountStatus;
+import main.java.com.vignesh.librarymanagement.model.people.Address;
+import main.java.com.vignesh.librarymanagement.model.people.Librarian;
+import main.java.com.vignesh.librarymanagement.model.people.Person;
+
+public class LibraryManagementSystemTest {
+	 
+	public static void main(String[] args) {
+		LibraryManagementSystem libraryManagementSystem = LibraryManagementSystem.getInstance();
+		
+		Address address = new Address();
+		address.setStreetNo("5-106");
+		address.setCity("KUKATPALLY");
+		address.setState("TELANGANA");
+		address.setCountry("INDIA");
+		address.setZipCode("500001");
+		
+		libraryManagementSystem.setAddress(address);
+		System.out.println(libraryManagementSystem);
+		
+		Librarian librarian = new Librarian(libraryManagementSystem);
+		Person p = new Person();
+		Address libAddress = new Address();
+		libAddress.setStreetNo("5-106");
+		libAddress.setCity("Thoriapakkam");
+		libAddress.setState("chennai");
+		libAddress.setCountry("INDIA");
+		libAddress.setZipCode("500001");
+		p.setAddress(libAddress);
+		
+		p.setEmail("bob999@gmail.com");
+		p.setName("Bob Frage");
+		p.setPhoneNo("9876543210");
+		librarian.setJoiningDate(new Date());
+		librarian.setPerson(p);
+		librarian.setAccountStatus(AccountStatus.ACTIVE);
+		
+		System.out.println(librarian);
+	
+		
+	}
+
+}

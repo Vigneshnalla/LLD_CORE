@@ -1,0 +1,35 @@
+package main.java.com.vignesh.librarymanagement.model.book;
+
+import main.java.com.vignesh.librarymanagement.enums.BookFormat;
+import main.java.com.vignesh.librarymanagement.enums.BookStatus;
+
+public class BookItem extends Book{
+	private String barcode;
+	private final boolean isReferenceOnly;
+	private double price;
+	
+	private BookStatus bookStatus;
+	private BookFormat bookFormat;
+	private Rack rackLocation;
+	
+	
+	public BookItem(String barcode, boolean isReferenceOnly, double price, BookStatus bookStatus, BookFormat bookFormat,
+			Rack rackLocation) {
+		super();
+		this.barcode = barcode;
+		this.isReferenceOnly = isReferenceOnly;
+		this.price = price;
+		this.bookStatus = bookStatus;
+		this.bookFormat = bookFormat;
+		this.rackLocation = rackLocation;
+	}
+	
+	
+	@Override
+	public String toString() {
+	    return "BookItem [barcode=" + barcode + ", title=" + getTitle() + 
+	           ", status=" + bookStatus + ", rack=" + rackLocation + "]";
+	}
+	
+	
+}

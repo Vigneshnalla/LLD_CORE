@@ -1,0 +1,49 @@
+package main.java.com.vignesh.librarymanagement.model.people;
+
+import java.util.Date;
+
+import main.java.com.vignesh.librarymanagement.LibraryManagementSystem;
+import main.java.com.vignesh.librarymanagement.model.book.BookItem;
+
+public class Member extends Account {
+	private Date dateofMemberShip;
+	private int totalBooksCheckedOUt;
+	private final LibraryManagementSystem librarySystem;
+
+	public LibraryManagementSystem(LibraryManagementSystem librarySystem) {
+	        this.librarySystem = librarySystem;
+	    }
+
+	public Date getDateofMemberShip() {
+		return dateofMemberShip;
+	}
+
+	public void setDateofMemberShip(Date dateofMemberShip) {
+		this.dateofMemberShip = dateofMemberShip;
+	}
+
+	public int getTotalBooksCheckedOUt() {
+		return totalBooksCheckedOUt;
+	}
+
+	public void setTotalBooksCheckedOUt(int totalBooksCheckedOUt) {
+		this.totalBooksCheckedOUt = totalBooksCheckedOUt;
+	}
+
+	public BookItem searchBookByTitle() {
+
+	}
+
+	public BookItem searchBookBySubject() {
+
+	}
+
+	public BookItem searchBookByPublishedDate() {
+
+	}
+
+	public BookItem searchBookByAuthor() {
+
+	}
+
+}

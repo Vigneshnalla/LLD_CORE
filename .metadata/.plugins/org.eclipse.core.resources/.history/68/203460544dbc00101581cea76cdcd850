@@ -1,0 +1,272 @@
+package main.java.com.vignesh.librarymanagement;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import main.java.com.vignesh.librarymanagement.enums.AccountStatus;
+import main.java.com.vignesh.librarymanagement.model.book.BookItem;
+import main.java.com.vignesh.librarymanagement.model.people.Address;
+import main.java.com.vignesh.librarymanagement.model.people.Librarian;
+import main.java.com.vignesh.librarymanagement.model.people.LibraryCard;
+import main.java.com.vignesh.librarymanagement.model.people.Member;
+
+public class LibraryManagementSystem {
+
+	private String id;
+	private Address address;
+	private static LibraryManagementSystem instance;
+
+	private List<BookItem> bookItems;
+	private Map<String, Member> members;
+	private Map<String, Librarian> librarians;
+
+	private LibraryManagementSystem() {
+		bookItems = new ArrayList<>();
+		members = new HashMap<>();
+		librarians = new HashMap<>();
+		id = UUID.randomUUID().toString();
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public Address getAddress() {
+		return address;
+	}
+
+	public void setAddress(Address address) {
+		this.address = address;
+	}
+
+	public Map<String, Member> getMembers() {
+		return members;
+	}
+
+	public void setMembers(Map<String, Member> members) {
+		this.members = members;
+	}
+
+	public Map<String, Librarian> getLibrarians() {
+		return librarians;
+	}
+
+	public void setLibrarians(Map<String, Librarian> librarians) {
+		this.librarians = librarians;
+	}
+
+	public void setBookItems(List<BookItem> bookItems) {
+		this.bookItems = bookItems;
+	}
+
+	public static synchronized LibraryManagementSystem getInstance() {
+		if (instance == null)
+			instance = new LibraryManagementSystem();
+		return instance;
+	}
+
+	// ---------- Add & Remove Members ----------
+
+	public void addMember(Member member) {
+		if (member == null || member.getId() == null) {
+			System.out.println("Cannot add null member or member with null ID.");
+			return;
+		}
+		members.put(member.getId(), member);
+		System.out.println("Member added successfully: " + member.getId());
+	}
+
+	public void removeMember(String memberId) {
+		if (memberId == null || !members.containsKey(memberId)) {
+			System.out.println("Cannot remove member. Invalid member ID: " + memberId);
+			return;
+		}
+		members.remove(memberId);
+		System.out.println("Member removed successfully: " + memberId);
+	}
+
+	// ---------- Member Validation ----------
+	public boolean isValidMember(String memberId) {
+		Member member = members.get(memberId);
+
+		if (member == null)
+			return logInvalid("No member found with ID: " + memberId);
+
+		if (member.getAccountStatus() != AccountStatus.ACTIVE)
+			return logInvalid("Member account not active: " + memberId);
+
+		LibraryCard card = member.getLibraryCard();
+		if (card == null)
+			return logInvalid("No library card associated with member: " + memberId);
+
+		if (!card.isActive())
+			return logInvalid("Library card is inactive for member: " + memberId);
+
+		if (card.isExpired())
+			return logInvalid("Library card expired for member: " + memberId);
+
+		return true;
+	}
+
+	// ---------- Librarian Validation ----------
+	public boolean isValidLibrarian(Librarian librarianInput) {
+		if (librarianInput == null || librarianInput.getId() == null) {
+			return logInvalid("Invalid librarian reference provided.");
+		}
+
+		String librarianId = librarianInput.getId();
+		Librarian librarian = librarians.get(librarianId);
+
+		if (librarian == null)
+			return logInvalid("No librarian found with ID: " + librarianId);
+
+		if (librarian.getAccountStatus() != AccountStatus.ACTIVE)
+			return logInvalid("Librarian account not active: " + librarianId);
+
+		LibraryCard card = librarian.getLibraryCard();
+		if (card == null)
+			return logInvalid("No library card associated with librarian: " + librarianId);
+
+		if (!card.isActive())
+			return logInvalid("Library card is inactive for librarian: " + librarianId);
+
+		if (card.isExpired())
+			return logInvalid("Library card expired for librarian: " + librarianId);
+
+		return true;
+
+	}
+
+	// ---------- Add & Remove Librarians ----------
+
+	public void addLibrarian(Librarian librarian) {
+		if (librarian == null || librarian.getId() == null) {
+			System.out.println("Cannot add null librarian or librarian with null ID.");
+			return;
+		}
+
+		LibraryCard card = librarian.getLibraryCard();
+		if (card == null) {
+			System.out.println("Librarian must have a library card.");
+			return;
+		}
+
+		if (!card.isActive()) {
+			System.out.println("Librarian's library card is inactive.");
+			return;
+		}
+
+		if (card.isExpired()) {
+			System.out.println("Librarian's library card is expired and cannot be added.");
+			return;
+		}
+
+		librarians.put(librarian.getId(), librarian);
+		System.out.println("Librarian added successfully: " + librarian.getId());
+	}
+
+	public void removeLibrarian(String librarianId) {
+		if (librarianId == null || !librarians.containsKey(librarianId)) {
+			System.out.println("Cannot remove librarian. Invalid librarian ID: " + librarianId);
+			return;
+		}
+		librarians.remove(librarianId);
+		System.out.println("Librarian removed successfully: " + librarianId);
+	}
+
+	// ---------- Book Management ----------
+
+	public void addBookItem(BookItem bookItem, Librarian librarian) {
+		if (bookItem == null) {
+			System.out.println("Cannot add null book item.");
+			return;
+		}
+		if (!isValidLibrarian(librarian)) return;
+		bookItems.add(bookItem);
+	}
+
+	public void removeBookItem(BookItem bookItem, Librarian librarian) {
+		if (bookItem == null) {
+			System.out.println("Cannot remove null book item.");
+			return;
+		}
+		if (!isValidLibrarian(librarian)) return;
+		bookItems.remove(bookItem);
+	}
+
+	public List<BookItem> getBookItems() {
+		return bookItems;
+	}
+
+	public BookItem findBookById(String bookId) {
+		return bookItems.stream().filter(book -> book.getISBN().equals(bookId)).findFirst().orElse(null);
+	}
+
+	public BookItem searchBookByPublishedDate(Date date) {
+		// TODO Auto-generated method stub
+		return bookItems.stream().filter(book -> book.getPublishedDate().equals(date)).findFirst().orElse(null);
+	}
+
+	public BookItem searchBookBySubject(String subject) {
+		// TODO Auto-generated method stub
+		return bookItems.stream().filter(book -> book.getSubject().equals(subject)).findFirst().orElse(null);
+	}
+
+	public BookItem searchBookByTitle(String title) {
+		return bookItems.stream().filter(book -> book.getTitle().equals(title)).findFirst().orElse(null);
+	}
+
+	public BookItem searchBookByAuthor(String author) {
+		return bookItems.stream().filter(book -> book.getAuthors().contains(author)).findFirst().orElse(null);
+	}
+
+	// ---------- Member Management ----------
+
+	public boolean doesMemberExist(String memberId) {
+		if (!members.containsKey(memberId)) {
+			System.out.println("No member found with ID: " + memberId);
+			return false;
+		}
+		return true;
+	}
+
+	public boolean blockMember(String memberId) {
+		if (!doesMemberExist(memberId))
+			return false;
+		Member member = members.get(memberId);
+		member.setAccountStatus(AccountStatus.BLOCKED);
+		return true;
+	}
+
+	public boolean unblockMember(String memberId) {
+		if (!doesMemberExist(memberId))
+			return false;
+		Member member = members.get(memberId);
+		member.setAccountStatus(AccountStatus.ACTIVE);
+		return true;
+	}
+
+	// ---------- Helper ----------
+
+	private boolean logInvalid(String msg) {
+		System.out.println(msg);
+		return false;
+	}
+
+	@Override
+	public String toString() {
+		return "LibraryManagementSystem [id=" + id + ", address=" + address 
+//				+ ", \n bookItems=" + bookItems
+//				+ ", \nmembers=" + members + ",\n librarians=" + librarians 
+				+ "]";
+	}
+
+}

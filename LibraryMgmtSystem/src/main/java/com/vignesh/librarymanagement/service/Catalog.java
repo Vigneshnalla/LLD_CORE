@@ -1,0 +1,74 @@
+package main.java.com.vignesh.librarymanagement.service;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import main.java.com.vignesh.librarymanagement.model.book.BookItem;
+
+public class Catalog {
+    private List<BookItem> bookItems;
+
+    public Catalog(List<BookItem> bookItems) {
+        this.bookItems = bookItems;
+    }
+
+    public List<BookItem> getBookItems() {
+        return new ArrayList<>(bookItems);
+    }
+
+    public boolean addBookItem(BookItem bookItem) {
+        if (bookItem == null) {
+            return logInvalid("Cannot add null book item.");
+        }
+
+        if (bookItems.stream().anyMatch(item -> item.getBarcode().equals(bookItem.getBarcode()))) {
+            return logInvalid("Book item with barcode " + bookItem.getBarcode() + " already exists.");
+        }
+
+        return bookItems.add(bookItem);
+    }
+
+    public boolean removeBookItem(BookItem bookItem) {
+        if (bookItem == null) {
+            return logInvalid("Cannot return null book item.");
+        }
+        return bookItems.remove(bookItem);
+    }
+
+    public List<BookItem> findBookByTitle(String title) {
+        if(title == null || title.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return bookItems.stream().filter(book -> book.getTitle().equalsIgnoreCase(title)).collect(Collectors.toList());
+    }
+
+    public List<BookItem> findBookByISBN(String isbn) {
+        if(isbn == null || isbn.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return bookItems.stream().filter(book -> book.getISBN().equalsIgnoreCase(isbn)).collect(Collectors.toList());
+    }
+
+    public List<BookItem> findBookByPublishedDate(Date date) {
+        if(date == null ) {
+            return Collections.emptyList();
+        }
+        return bookItems.stream().filter(book -> book.getPublishedDate().equals(date)).collect(Collectors.toList());
+    }
+
+    public List<BookItem> searchBookBySubject(String subject) {
+        if(subject == null || subject.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return bookItems.stream().filter(book -> book.getSubject().equalsIgnoreCase(subject)).collect(Collectors.toList());
+    }
+
+    // -------------- helper methods -----------
+    private boolean logInvalid(String msg) {
+        System.out.println(msg);
+        return false;
+    }
+}

@@ -1,0 +1,63 @@
+package main.java.com.vignesh.librarymanagement;
+
+import java.util.Date;
+
+import main.java.com.vignesh.librarymanagement.enums.AccountStatus;
+import main.java.com.vignesh.librarymanagement.model.people.Address;
+import main.java.com.vignesh.librarymanagement.model.people.Librarian;
+import main.java.com.vignesh.librarymanagement.model.people.LibraryCard;
+import main.java.com.vignesh.librarymanagement.model.people.Person;
+
+public class LibraryManagementSystemTest {
+	 
+	public static void main(String[] args) {
+		LibraryManagementSystem libraryManagementSystem = LibraryManagementSystem.getInstance();
+		
+		Address address = new Address();
+		address.setStreetNo("5-106");
+		address.setCity("KUKATPALLY");
+		address.setState("TELANGANA");
+		address.setCountry("INDIA");
+		address.setZipCode("500001");
+		
+		libraryManagementSystem.setAddress(address);
+		System.out.println(libraryManagementSystem);
+		
+		Librarian librarian = new Librarian(libraryManagementSystem);
+		
+		 // Librarian Address
+        Address libAddress = new Address();
+        libAddress.setStreetNo("9-222");
+        libAddress.setCity("Thoraipakkam");
+        libAddress.setState("Chennai");
+        libAddress.setCountry("India");
+        libAddress.setZipCode("600097");
+
+        // Librarian Person Details
+        Person p = new Person();
+        p.setAddress(libAddress);
+        p.setEmail("bob999@gmail.com");
+        p.setName("Bob Frage");
+        p.setPhoneNo("9876543210");
+
+        // Create Library Card
+        LibraryCard card = new LibraryCard();
+        card.setCardNo("CARD-001");
+        card.setBarcode("BAR-001");
+        card.setActive(true);
+        card.setIssuedAt(new Date());
+		
+        librarian.setId("L001");
+        librarian.setPassword("securePassword@123");
+        librarian.setJoiningDate(new Date());
+        librarian.setPerson(p);
+        librarian.setAccountStatus(AccountStatus.ACTIVE);
+        librarian.setLibraryCard(card);
+        
+        
+		System.out.println(librarian);
+	
+		
+	}
+
+}

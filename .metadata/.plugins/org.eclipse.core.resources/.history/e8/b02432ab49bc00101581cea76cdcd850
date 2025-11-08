@@ -1,0 +1,154 @@
+package main.java.com.vignesh.librarymanagement;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import main.java.com.vignesh.librarymanagement.enums.AccountStatus;
+import main.java.com.vignesh.librarymanagement.enums.BookFormat;
+import main.java.com.vignesh.librarymanagement.enums.BookStatus;
+import main.java.com.vignesh.librarymanagement.model.book.Author;
+import main.java.com.vignesh.librarymanagement.model.book.BookItem;
+import main.java.com.vignesh.librarymanagement.model.book.Rack;
+import main.java.com.vignesh.librarymanagement.model.people.Address;
+import main.java.com.vignesh.librarymanagement.model.people.Librarian;
+import main.java.com.vignesh.librarymanagement.model.people.LibraryCard;
+import main.java.com.vignesh.librarymanagement.model.people.Person;
+
+public class LibraryManagementSystemTest {
+	 
+	public static void main(String[] args) {
+		LibraryManagementSystem libraryManagementSystem = LibraryManagementSystem.getInstance();
+		
+		Address address = new Address();
+		address.setStreetNo("5-106");
+		address.setCity("KUKATPALLY");
+		address.setState("TELANGANA");
+		address.setCountry("INDIA");
+		address.setZipCode("500001");
+		
+		libraryManagementSystem.setAddress(address);
+		
+		Librarian librarian = new Librarian(libraryManagementSystem);
+		
+		 // Librarian Address
+        Address libAddress = new Address();
+        libAddress.setStreetNo("9-222");
+        libAddress.setCity("Thoraipakkam");
+        libAddress.setState("Chennai");
+        libAddress.setCountry("India");
+        libAddress.setZipCode("600097");
+
+        // Librarian Person Details
+        Person p = new Person();
+        p.setAddress(libAddress);
+        
+        p.setEmail("bob999@gmail.com");
+        p.setName("Bob Frage");
+        p.setPhoneNo("9876543210");
+
+        // Create Library Card
+        LibraryCard card = new LibraryCard();
+        card.setCardNo("CARD-001");
+        card.setBarcode("BAR-001");
+        card.setActive(true);
+        card.setIssuedAt(new Date());
+		
+        librarian.setId("L001");
+        librarian.setPassword("securePassword@123");
+        librarian.setJoiningDate(new Date());
+        librarian.setPerson(p);
+        librarian.setAccountStatus(AccountStatus.ACTIVE);
+        librarian.setLibraryCard(card);
+        
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.YEAR, 1); // valid for 1 year
+        card.setExpiryDate(cal.getTime());
+
+        
+        
+        
+	
+		
+	}
+	
+	public List<BookItem> createBookItems() {
+	    List<BookItem> bookItems = new ArrayList<>();
+
+	    List<Author> authors1 = List.of(new Author("J.K. Rowling", "British author of the Harry Potter series"));
+	    List<Author> authors2 = List.of(new Author("George R.R. Martin", "Author of A Song of Ice and Fire"));
+	    List<Author> authors3 = List.of(new Author("Dan Brown", "Author of thrillers like The Da Vinci Code"));
+	    List<Author> authors4 = List.of(new Author("Paulo Coelho", "Brazilian novelist and lyricist"));
+	    List<Author> authors5 = List.of(new Author("J.R.R. Tolkien", "Author of The Lord of the Rings"));
+	    List<Author> authors6 = List.of(new Author("Yuval Noah Harari", "Historian and author of Sapiens"));
+	    List<Author> authors7 = List.of(new Author("Agatha Christie", "Queen of Mystery"));
+	    List<Author> authors8 = List.of(new Author("Stephen King", "American author of horror and suspense novels"));
+	    List<Author> authors9 = List.of(new Author("Chetan Bhagat", "Indian author and columnist"));
+	    List<Author> authors10 = List.of(new Author("Arthur Conan Doyle", "Creator of Sherlock Holmes"));
+
+	    bookItems.add(new BookItem(
+	            "Harry Potter and the Sorcerer’s Stone", "ISBN001", new Date(), "Fantasy", authors1,
+	            "A young wizard’s journey begins.", "English", 309, "BC001", false, 499.0,
+	            BookStatus.AVAILABLE, BookFormat.HARDCOVER, new Rack("A1", 1)
+	    ));
+
+	    bookItems.add(new BookItem(
+	            "A Game of Thrones", "ISBN002", new Date(), "Fantasy", authors2,
+	            "First book of A Song of Ice and Fire.", "English", 694, "BC002", false, 599.0,
+	            BookStatus.AVAILABLE, BookFormat.PAPERBACK, new Rack("A1", 2)
+	    ));
+
+	    bookItems.add(new BookItem(
+	            "The Da Vinci Code", "ISBN003", new Date(), "Thriller", authors3,
+	            "A symbologist uncovers secrets hidden in art.", "English", 454, "BC003", false, 450.0,
+	            BookStatus.AVAILABLE, BookFormat.PAPERBACK, new Rack("A2", 1)
+	    ));
+
+	    bookItems.add(new BookItem(
+	            "The Alchemist", "ISBN004", new Date(), "Fiction", authors4,
+	            "A shepherd boy’s journey to find his treasure.", "English", 197, "BC004", false, 350.0,
+	            BookStatus.AVAILABLE, BookFormat.HARDCOVER, new Rack("A2", 2)
+	    ));
+
+	    bookItems.add(new BookItem(
+	            "The Lord of the Rings", "ISBN005", new Date(), "Fantasy", authors5,
+	            "An epic high-fantasy adventure.", "English", 1178, "BC005", false, 899.0,
+	            BookStatus.AVAILABLE, BookFormat.HARDCOVER, new Rack("A3", 1)
+	    ));
+
+	    bookItems.add(new BookItem(
+	            "Sapiens: A Brief History of Humankind", "ISBN006", new Date(), "History", authors6,
+	            "Exploration of human evolution.", "English", 498, "BC006", false, 550.0,
+	            BookStatus.AVAILABLE, BookFormat.PAPERBACK, new Rack("B1", 1)
+	    ));
+
+	    bookItems.add(new BookItem(
+	            "Murder on the Orient Express", "ISBN007", new Date(), "Mystery", authors7,
+	            "A murder mystery aboard a train.", "English", 256, "BC007", false, 320.0,
+	            BookStatus.AVAILABLE, BookFormat.PAPERBACK, new Rack("B2", 2)
+	    ));
+
+	    bookItems.add(new BookItem(
+	            "The Shining", "ISBN008", new Date(), "Horror", authors8,
+	            "A haunted hotel and a writer losing his sanity.", "English", 447, "BC008", false, 480.0,
+	            BookStatus.AVAILABLE, BookFormat.HARDCOVER, new Rack("C1", 1)
+	    ));
+
+	    bookItems.add(new BookItem(
+	            "2 States", "ISBN009", new Date(), "Romance", authors9,
+	            "A love story between two individuals from different states.", "English", 270, "BC009", false, 250.0,
+	            BookStatus.AVAILABLE, BookFormat.PAPERBACK, new Rack("C2", 2)
+	    ));
+
+	    bookItems.add(new BookItem(
+	            "The Adventures of Sherlock Holmes", "ISBN010", new Date(), "Detective", authors10,
+	            "A collection of Sherlock Holmes short stories.", "English", 307, "BC010", false, 400.0,
+	            BookStatus.AVAILABLE, BookFormat.PAPERBACK, new Rack("C3", 1)
+	    ));
+
+	    return bookItems;
+	}
+
+
+}

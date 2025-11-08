@@ -1,0 +1,8 @@
+package main.java.com.vignesh.librarymanagement.model.people;
+
+public class Person {
+	private String name;
+	private String email;
+	private String phoneNo;
+	private Address address;
+}

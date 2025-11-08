@@ -1,0 +1,6 @@
+package main.java.com.vignesh.librarymanagement.model.book;
+
+public class Rack {
+	private int number ;
+	private String locationIdentifier;
+}

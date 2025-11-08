@@ -1,0 +1,34 @@
+package main.java.com.vignesh.librarymanagement.model.people;
+
+import java.util.Date;
+
+public class LibraryCard {
+	private String cardNo;
+	private Date issuedAt;
+	private String barcode;
+	private boolean active;
+	public String getCardNo() {
+		return cardNo;
+	}
+	public void setCardNo(String cardNo) {
+		this.cardNo = cardNo;
+	}
+	public Date getIssuedAt() {
+		return issuedAt;
+	}
+	public void setIssuedAt(Date issuedAt) {
+		this.issuedAt = issuedAt;
+	}
+	public String getBarcode() {
+		return barcode;
+	}
+	public void setBarcode(String barcode) {
+		this.barcode = barcode;
+	}
+	public boolean isActive() {
+		return active;
+	}
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+}

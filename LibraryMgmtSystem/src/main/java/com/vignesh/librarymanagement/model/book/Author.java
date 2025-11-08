@@ -1,0 +1,87 @@
+package main.java.com.vignesh.librarymanagement.model.book;
+
+import java.util.Date;
+import java.util.Objects;
+
+public class Author {
+    private String id;
+    private String name;
+    private String biography;
+    private Date dateOfBirth;
+    private String nationality;
+
+    public Author(String id, String name, String biography, Date dateOfBirth, String nationality) {
+        this.id = id;
+        this.name = name;
+        this.biography = biography;
+        this.dateOfBirth = dateOfBirth;
+        this.nationality = nationality;
+    }
+
+    public Author() {
+        // Default constructor
+    }
+
+    // ---------- Getters & Setters ----------
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getBiography() {
+        return biography;
+    }
+
+    public void setBiography(String biography) {
+        this.biography = biography;
+    }
+
+    public Date getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(Date dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getNationality() {
+        return nationality;
+    }
+
+    public void setNationality(String nationality) {
+        this.nationality = nationality;
+    }
+
+    // ---------- Utility ----------
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Author)) return false;
+        Author other = (Author) obj;
+        return Objects.equals(id, other.id);
+    }
+
+    @Override
+	public String toString() {
+		return "Author [id=" + id + ", name=" + name + ", biography=" + biography + ", dateOfBirth=" + dateOfBirth
+				+ ", nationality=" + nationality + "]";
+	}
+
+	@Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+}

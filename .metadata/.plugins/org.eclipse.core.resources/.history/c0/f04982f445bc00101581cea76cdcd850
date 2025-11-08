@@ -1,0 +1,14 @@
+package main.java.com.vignesh.librarymanagement;
+
+public class LibraryManagementSystemTest {
+	 
+	public static void main(String[] args) {
+		LibraryManagementSystem libraryManagementSystem = LibraryManagementSystem.getInstance();
+		
+		
+		System.out.println(libraryManagementSystem);
+		
+		
+	}
+
+}

@@ -1,0 +1,802 @@
+package main.java.com.vignesh.librarymanagement;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import main.java.com.vignesh.librarymanagement.constants.AppConstants;
+import main.java.com.vignesh.librarymanagement.enums.AccountStatus;
+import main.java.com.vignesh.librarymanagement.enums.BookStatus;
+import main.java.com.vignesh.librarymanagement.enums.ReservationStatus;
+import main.java.com.vignesh.librarymanagement.model.book.BookItem;
+import main.java.com.vignesh.librarymanagement.model.bookreservation.BookReservation;
+import main.java.com.vignesh.librarymanagement.model.lending.BookLending;
+import main.java.com.vignesh.librarymanagement.model.people.Address;
+import main.java.com.vignesh.librarymanagement.model.people.Librarian;
+import main.java.com.vignesh.librarymanagement.model.people.LibraryCard;
+import main.java.com.vignesh.librarymanagement.model.people.Member;
+
+public class LibraryManagementSystem {
+
+	private String id;
+	private Address address;
+	private static LibraryManagementSystem instance;
+
+	private List<BookItem> bookItems;
+	private Map<String, Member> members;
+	private Map<String, Librarian> librarians;
+	private Map<String, List<BookLending>> bookLendings;
+	private Map<String, List<BookReservation>> bookReservations;
+//	private ReservationNotificationService notificationService;
+
+	private LibraryManagementSystem() {
+		bookItems = new ArrayList<>();
+		members = new HashMap<>();
+		librarians = new HashMap<>();
+		bookLendings = new HashMap<>();
+		bookReservations = new HashMap<>();
+		id = UUID.randomUUID().toString();
+		initializeNotificationService();
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public Address getAddress() {
+		return address;
+	}
+
+	public void setAddress(Address address) {
+		this.address = address;
+	}
+
+	public Map<String, Member> getMembers() {
+		return members;
+	}
+
+	public Map<String, Librarian> getLibrarians() {
+		return librarians;
+	}
+
+	public void setBookItems(List<BookItem> bookItems) {
+		this.bookItems = bookItems;
+	}
+
+	public static synchronized LibraryManagementSystem getInstance() {
+		if (instance == null)
+			instance = new LibraryManagementSystem();
+		return instance;
+	}
+
+	// ---------- System Initialization ----------
+	private void initializeNotificationService() {
+		this.notificationService = new ReservationNotificationService(this);
+		notificationService.startNotificationService();
+	}
+
+	public void shutdownSystem() {
+		if (notificationService != null) {
+			notificationService.stopNotificationService();
+		}
+	}
+
+	// ---------- Add & Remove Members ----------
+
+	public boolean addMember(Member member, Librarian librarian) {
+		if (member == null || member.getId() == null) {
+			System.out.println("Cannot add null member or member with null ID.");
+			return false;
+		}
+
+		if (!isValidLibrarian(librarian))
+			return false;
+
+		if (members.containsKey(member.getId())) {
+			System.out.println("Member with Id already exists : " + member.getId());
+			return false;
+		}
+
+		members.put(member.getId(), member);
+		System.out.println("Member added successfully: " + member.getId());
+		return true;
+	}
+
+	public boolean removeMember(String memberId, Librarian librarian) {
+		if (memberId == null || !members.containsKey(memberId)) {
+			System.out.println("Cannot remove member. Invalid member ID: " + memberId);
+			return false;
+		}
+
+		if (!isValidLibrarian(librarian))
+			return false;
+
+		// Check if member has any books checked out
+		List<BookLending> lendings = bookLendings.get(memberId);
+		if (lendings != null && !lendings.isEmpty()) {
+			logInvalid("❌ Cannot remove member. Please return all books first.");
+			return false;
+		}
+
+		members.remove(memberId);
+		System.out.println("Member removed successfully: " + memberId);
+		return true;
+	}
+
+	// ---------- Member Validation ----------
+	public boolean isValidMember(String memberId) {
+		Member member = members.get(memberId);
+
+		if (member == null)
+			return logInvalid("No member found with ID: " + memberId);
+
+		if (member.getAccountStatus() != AccountStatus.ACTIVE)
+			return logInvalid("Member account not active: " + memberId);
+
+		LibraryCard card = member.getLibraryCard();
+		if (card == null)
+			return logInvalid("No library card associated with member: " + memberId);
+
+		if (!card.isActive())
+			return logInvalid("Library card is inactive for member: " + memberId);
+
+		if (card.isExpired())
+			return logInvalid("Library card expired for member: " + memberId);
+
+		return true;
+	}
+
+	// ---------- Librarian Validation ----------
+	public boolean isValidLibrarian(Librarian librarianInput) {
+		if (librarianInput == null || librarianInput.getId() == null) {
+			return logInvalid("Invalid librarian reference provided.");
+		}
+
+		String librarianId = librarianInput.getId();
+		Librarian librarian = librarians.get(librarianId);
+
+		if (librarian == null)
+			return logInvalid("No librarian found with ID: " + librarianId);
+
+		if (librarian.getAccountStatus() != AccountStatus.ACTIVE)
+			return logInvalid("Librarian account not active: " + librarianId);
+
+		LibraryCard card = librarian.getLibraryCard();
+		if (card == null)
+			return logInvalid("No library card associated with librarian: " + librarianId);
+
+		if (!card.isActive())
+			return logInvalid("Library card is inactive for librarian: " + librarianId);
+
+		if (card.isExpired())
+			return logInvalid("Library card expired for librarian: " + librarianId);
+
+		return true;
+
+	}
+
+	// ---------- Add & Remove Librarians ----------
+
+	public void addLibrarian(Librarian librarian) {
+		if (librarian == null || librarian.getId() == null) {
+			System.out.println("Cannot add null librarian or librarian with null ID.");
+			return;
+		}
+
+		LibraryCard card = librarian.getLibraryCard();
+
+		if (card == null) {
+			logInvalid("Librarian must have a library card.");
+			return;
+		}
+
+		if (!card.isActive()) {
+			System.out.println("Librarian's library card is inactive.");
+			return;
+		}
+
+		if (card.isExpired()) {
+			System.out.println("Librarian's library card is expired and cannot be added.");
+			return;
+		}
+		if (librarians.containsKey(librarian.getId())) {
+			System.out.println("Librarian with ID already exists: " + librarian.getId());
+			return;
+		}
+
+		librarians.put(librarian.getId(), librarian);
+		System.out.println("Librarian added successfully: " + librarian.getId());
+	}
+
+	public void removeLibrarian(String librarianId) {
+		if (librarianId == null || !librarians.containsKey(librarianId)) {
+			System.out.println("Cannot remove librarian. Invalid librarian ID: " + librarianId);
+			return;
+		}
+		librarians.remove(librarianId);
+		System.out.println("Librarian removed successfully: " + librarianId);
+	}
+
+	// ---------- Book Management ----------
+
+	public boolean addBookItem(BookItem bookItem, Librarian librarian) {
+		if (bookItem == null) {
+			System.out.println("Cannot add null book item.");
+			return false;
+		}
+		if (!isValidLibrarian(librarian))
+			return false;
+
+		bookItems.add(bookItem);
+		return true;
+	}
+
+	public boolean removeBookItem(BookItem bookItem, Librarian librarian) {
+		if (bookItem == null) {
+			System.out.println("Cannot remove null book item.");
+			return false;
+		}
+		if (!isValidLibrarian(librarian))
+			return false;
+
+		// Check if book is currently loaned
+		if (bookItem.getBookStatus() == BookStatus.LOANED) {
+			logInvalid("❌ Cannot remove book that is currently loaned out.");
+			return false;
+		}
+
+		// Remove any reservations for this book
+		bookReservations.remove(bookItem.getISBN());
+
+		bookItems.remove(bookItem);
+		return true;
+	}
+
+	public List<BookItem> getBookItems() {
+		return bookItems;
+	}
+
+	public BookItem findBookById(String bookId) {
+		return bookItems.stream().filter(book -> book.getISBN().equals(bookId)).findFirst().orElse(null);
+	}
+
+	public BookItem searchBookByPublishedDate(Date date) {
+		return bookItems.stream().filter(book -> book.getPublishedDate().equals(date)).findFirst().orElse(null);
+	}
+
+	public BookItem searchBookByISBN(String isbn) {
+		return bookItems.stream().filter(book -> book.getISBN().equals(isbn)).findFirst().orElse(null);
+	}
+
+	public BookItem searchBookBySubject(String subject) {
+		return bookItems.stream().filter(book -> book.getSubject().equals(subject)).findFirst().orElse(null);
+	}
+
+	public BookItem searchBookByTitle(String title) {
+		return bookItems.stream().filter(book -> book.getTitle().equals(title)).findFirst().orElse(null);
+	}
+
+	public BookItem searchBookByAuthor(String authorName) {
+		return bookItems.stream()
+				.filter(book -> book.getAuthors().stream().anyMatch(a -> a.getName().equalsIgnoreCase(authorName)))
+				.findFirst().orElse(null);
+	}
+
+	// ---------- Member Management ----------
+
+	public boolean doesMemberExist(String memberId) {
+		if (!members.containsKey(memberId)) {
+			System.out.println("No member found with ID: " + memberId);
+			return false;
+		}
+		return true;
+	}
+
+	public boolean blockMember(String memberId, Librarian librarian) {
+		if (!isValidLibrarian(librarian))
+			return false;
+		if (!doesMemberExist(memberId))
+			return false;
+		Member member = members.get(memberId);
+		member.setAccountStatus(AccountStatus.BLOCKED);
+		return true;
+	}
+
+	public boolean unblockMember(String memberId, Librarian librarian) {
+		if (!isValidLibrarian(librarian))
+			return false;
+		if (!doesMemberExist(memberId))
+			return false;
+		Member member = members.get(memberId);
+		member.setAccountStatus(AccountStatus.ACTIVE);
+		return true;
+	}
+
+	// ---------- Book Issuing ----------
+
+	public boolean issueBook(BookItem bookItem, Member member) {
+		// Validate member
+		if (member == null || !isValidMember(member.getId())) {
+			logInvalid("❌ Invalid member: " + (member != null ? member.getId() : "null"));
+			return false;
+		}
+
+		// Check checkout limit
+		if (member.getTotalBooksCheckedOut() >= AppConstants.MAX_BOOKS_CHECKOUT_LIMIT) {
+			logInvalid("❌ Member '" + member.getId() + "' has reached the checkout limit of "
+					+ AppConstants.MAX_BOOKS_CHECKOUT_LIMIT + " books.");
+			return false;
+		}
+
+		// Find book
+		BookItem availableBook = searchBookByISBN(bookItem.getISBN());
+		if (availableBook == null) {
+			logInvalid("❌ Book with ISBN " + bookItem.getISBN() + " not found in the system.");
+			return false;
+		}
+
+		// Check reference restriction
+		if (availableBook.getBookStatus() == BookStatus.REFERENCE_ONLY) {
+			logInvalid("❌ Book '" + availableBook.getTitle() + "' cannot be checked out (Reference Only).");
+			return false;
+		}
+
+		// Check if available
+		if (availableBook.getBookStatus() != BookStatus.AVAILABLE) {
+			System.out.println("📕 Book '" + availableBook.getTitle() + "' is not available for checkout.");
+			return false;
+		}
+
+		// Handle reservations with priority queue
+		List<BookReservation> reservations = bookReservations.get(bookItem.getISBN());
+
+		if (reservations != null && !reservations.isEmpty()) {
+			// Get the first reservation in queue (priority order)
+			BookReservation firstReservation = reservations.get(0);
+
+			if (firstReservation.getMemberId().equals(member.getId())) {
+				// Current member is first in queue - fulfill reservation
+				firstReservation.setReservationStatus(ReservationStatus.COMPLETED);
+				reservations.remove(0);
+				System.out.println("✅ Fulfilled reservation for member " + member.getId());
+			} else {
+				// Book is reserved for someone else in priority
+				logInvalid("❌ Book is reserved for member " + firstReservation.getMemberId()
+						+ ". Cannot issue to member " + member.getId());
+				return false;
+			}
+
+			// Clean up empty reservation list
+			if (reservations.isEmpty()) {
+				bookReservations.remove(bookItem.getISBN());
+			}
+		}
+
+		// Prepare lending record
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.DAY_OF_MONTH, AppConstants.MAX_LENDING_DAYS);
+
+		BookLending bookLending = new BookLending(availableBook.getISBN(), member.getId(), cal.getTime());
+
+		bookLendings.computeIfAbsent(member.getId(), k -> new ArrayList<>()).add(bookLending);
+
+		// Update book and member status
+		availableBook.setBookStatus(BookStatus.LOANED);
+		member.setTotalBooksCheckedOut(member.getTotalBooksCheckedOut() + 1);
+
+		System.out.println("✅ Book '" + availableBook.getTitle() + "' issued to member '" + member.getId() + "' until "
+				+ cal.getTime());
+
+		return true;
+	}
+
+	public List<BookItem> getMemberIssuedBooks(String memberId) {
+		List<BookLending> lendings = bookLendings.get(memberId);
+		if (lendings == null || lendings.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		return lendings.stream().map(BookLending::getBookId).map(this::searchBookByISBN).filter(Objects::nonNull)
+				.toList();
+	}
+
+	// ---------- Book Return ----------
+
+	public boolean collectBookitem(BookItem bookItem, Member member) {
+		// Validate member
+		if (!isValidMember(member.getId())) {
+			return false;
+		}
+
+		if (bookItem == null) {
+			return logInvalid("❌ BookItem is null");
+		}
+
+		// Fetch book details
+		BookItem availableBook = searchBookByISBN(bookItem.getISBN());
+		if (availableBook == null) {
+			return logInvalid("❌ Book with ISBN " + bookItem.getISBN() + " not found in the system.");
+		}
+
+		// Check if member has any lendings
+		List<BookLending> lendings = bookLendings.get(member.getId());
+		if (lendings == null || lendings.isEmpty()) {
+			return logInvalid("Member: " + member.getId() + " has no books to return.");
+		}
+
+		// Find the specific lending for this book (FIXED: uses .equals() instead of ==)
+		BookLending lending = lendings.stream().filter(each -> each.getBookId().equals(bookItem.getISBN())).findFirst()
+				.orElse(null);
+
+		if (lending == null) {
+			return logInvalid("This book is not issued to member '" + member.getId() + "'");
+		}
+
+		// Check if book is returned within due date (but allow returning overdue books)
+		boolean isOverdue = !isBookReturnedWithinDueTime(lending);
+
+		if (isOverdue) {
+			double fineAmount = determineFine(lending);
+			System.out.println("⚠️  Book returned after due date. Fine amount: $" + fineAmount);
+			// In a real system, you'd record this fine in a separate fines database
+		}
+
+		// Remove from lendings
+		lendings.remove(lending);
+		if (lendings.isEmpty()) {
+			bookLendings.remove(member.getId()); // clean up empty list
+		}
+
+		// Decrement total books
+		member.setTotalBooksCheckedOut(member.getTotalBooksCheckedOut() - 1);
+
+		// Update status to available
+		bookItem.setBookStatus(BookStatus.AVAILABLE);
+
+		System.out.println("✅ Book '" + bookItem.getTitle() + "' successfully returned by member '" + member.getId() + "'"
+				+ (isOverdue ? " (OVERDUE - Fine applied)" : " (On time)"));
+
+		return true;
+	}
+
+	private boolean isBookReturnedWithinDueTime(BookLending lending) {
+		if (lending == null || lending.getDueDate() == null) {
+			return false; // invalid lending
+		}
+
+		Date today = new Date();
+		return !today.after(lending.getDueDate()); // true if returned on or before due date
+	}
+
+	// ---------- Fine Management ----------
+
+	public double computeFineAmount(String memberId) {
+		if (memberId == null || memberId.isEmpty()) {
+			logInvalid("Member id is null");
+			return 0;
+		}
+		List<BookLending> lendings = bookLendings.get(memberId);
+		if (lendings == null || lendings.isEmpty()) {
+			logInvalid("Member: " + memberId + " has no books to return.");
+			return 0;
+
+		}
+		double fineAmount = 0;
+		for (BookLending lending : lendings) {
+			fineAmount += determineFine(lending);
+		}
+
+		return fineAmount;
+
+	}
+
+	public Map<String, List<BookLending>> getBookLendings() {
+		return bookLendings;
+	}
+
+	public void setBookLendings(Map<String, List<BookLending>> bookLendings) {
+		this.bookLendings = bookLendings;
+	}
+
+	public double determineFine(BookLending bookLending) {
+		if (bookLending == null || bookLending.getDueDate() == null) {
+			return 0; // no fine for invalid lending
+		}
+		Date dueDate = bookLending.getDueDate();
+		Date today = new Date();
+
+		if (!today.after(dueDate))
+			return 0;
+
+		long diffMillis = today.getTime() - dueDate.getTime();
+		long diffDays = diffMillis / (1000 * 60 * 60 * 24);
+
+		return diffDays * AppConstants.FINE_PER_DAY;
+
+	}
+
+	// ---------- Book Renewal ----------
+
+	public boolean renewBookItem(BookItem bookItem, String memberId) {
+		if (!isValidMember(memberId)) {
+			return false;
+		}
+
+		if (bookItem == null) {
+			return logInvalid("❌ BookItem is null");
+		}
+
+		// Check if book exists in system
+		BookItem availableBook = searchBookByISBN(bookItem.getISBN());
+		if (availableBook == null) {
+			return logInvalid("❌ Book with ISBN " + bookItem.getISBN() + " not found in the system.");
+		}
+
+		// Check if member has any lendings
+		List<BookLending> lendings = bookLendings.get(memberId);
+		if (lendings == null || lendings.isEmpty()) {
+			return logInvalid("Member: " + memberId + " has no books to renew.");
+		}
+
+		// Find the specific lending for this book
+		BookLending lending = lendings.stream().filter(each -> each.getBookId().equals(bookItem.getISBN())).findFirst()
+				.orElse(null);
+
+		if (lending == null) {
+			return logInvalid("This book is not issued to member '" + memberId + "'");
+		}
+
+		// Check if book has any existing fines (overdue)
+		if (!isBookReturnedWithinDueTime(lending)) {
+			logInvalid("❌ Cannot renew book - it is overdue. Please pay fine first.");
+			return false;
+		}
+
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date()); // today
+		cal.add(Calendar.DAY_OF_MONTH, AppConstants.MAX_LENDING_DAYS);
+		lending.setDueDate(cal.getTime());
+
+		System.out.println(
+				"✅ Book '" + bookItem.getTitle() + "' renewed for member '" + memberId + "' until " + cal.getTime());
+		return true;
+
+	}
+
+	// ---------- Reservation Management ----------
+
+	public boolean addReservation(BookItem bookItem, String memberId) {
+		if (!isValidMember(memberId)) {
+			return false;
+		}
+
+		if (bookItem == null) {
+			return logInvalid("❌ BookItem is null");
+		}
+
+		// Check if book exists in system
+		BookItem availableBook = searchBookByISBN(bookItem.getISBN());
+		if (availableBook == null) {
+			return logInvalid("❌ Book not found in system: " + bookItem.getISBN());
+		}
+
+		// Check if book is available - no need to reserve
+		if (availableBook.getBookStatus() == BookStatus.AVAILABLE) {
+			return logInvalid("❌ Book is available for checkout, no need to reserve: " + bookItem.getISBN());
+		}
+
+		// Check if member already has a reservation for this book
+		List<BookReservation> reservations = bookReservations.get(bookItem.getISBN());
+		if (reservations != null) {
+			boolean alreadyReserved = reservations.stream().anyMatch(
+					res -> res.getMemberId().equals(memberId) && res.getReservationStatus() == ReservationStatus.WAITING);
+			if (alreadyReserved) {
+				return logInvalid("Member already has an active reservation for book " + bookItem.getISBN());
+			}
+		}
+
+		// Create new reservation
+		BookReservation bookReservation = new BookReservation(bookItem.getISBN(), memberId);
+		bookReservation.setId(UUID.randomUUID().toString());
+		bookReservation.setReservationStatus(ReservationStatus.WAITING);
+
+		bookReservations.computeIfAbsent(bookItem.getISBN(), k -> new ArrayList<>()).add(bookReservation);
+		System.out.println("✅ Reservation added for member " + memberId + " on book " + bookItem.getISBN());
+
+		return true;
+	}
+
+	public boolean removeReservation(BookItem bookItem, String memberId) {
+		if (!isValidMember(memberId)) {
+			return false;
+		}
+
+		if (bookItem == null) {
+			return logInvalid("❌ BookItem is null");
+		}
+
+		// Check if book exists in system
+		BookItem availableBook = searchBookByISBN(bookItem.getISBN());
+		if (availableBook == null) {
+			return logInvalid("❌ Book not found in system: " + bookItem.getISBN());
+		}
+
+		List<BookReservation> reservations = bookReservations.get(bookItem.getISBN());
+		if (reservations == null || reservations.isEmpty()) {
+			return logInvalid("No reservations found for book: " + bookItem.getISBN());
+		}
+
+		// Find and remove the reservation
+		BookReservation reservationToRemove = reservations.stream().filter(res -> res.getMemberId().equals(memberId))
+				.findFirst().orElse(null);
+
+		if (reservationToRemove != null) {
+			reservations.remove(reservationToRemove);
+			System.out.println("✅ Reservation removed for member " + memberId + " on book " + bookItem.getISBN());
+
+			// Clean up empty reservation lists
+			if (reservations.isEmpty()) {
+				bookReservations.remove(bookItem.getISBN());
+			}
+			return true;
+		}
+
+		return logInvalid("No reservation found for member " + memberId + " on book " + bookItem.getISBN());
+	}
+
+	public Map<String, List<BookReservation>> getBookReservations() {
+		return bookReservations;
+	}
+
+	public List<BookReservation> getBookReservationsForBookItem(String bookId) {
+		return bookReservations.get(bookId);
+	}
+
+	// ---------- Notification Service Trigger ----------
+//	public void triggerReservationNotifications() {
+//		if (notificationService != null) {
+//			notificationService.notifyReservers();
+//		}
+//	}
+
+	// ---------- Helper ----------
+
+	private boolean logInvalid(String msg) {
+		System.out.println(msg);
+		return false;
+	}
+
+	@Override
+	public String toString() {
+		return "LibraryManagementSystem [id=" + id + ", address=" + address + ", \n bookItems=" + bookItems
+				+ ", \nmembers=" + members + ",\n librarians=" + librarians + "]";
+	}
+
+	// ---------- Inner Notification Service Class ----------
+	private class ReservationNotificationService {
+		private ScheduledExecutorService scheduler;
+		private LibraryManagementSystem librarySystem;
+
+		public ReservationNotificationService(LibraryManagementSystem librarySystem) {
+			this.librarySystem = librarySystem;
+			this.scheduler = Executors.newScheduledThreadPool(1);
+		}
+
+		public void startNotificationService() {
+			// Run every 24 hours
+			scheduler.scheduleAtFixedRate(this::notifyReservers, 0, 24, TimeUnit.HOURS);
+			System.out.println("🔔 Reservation notification service started");
+		}
+
+		public void stopNotificationService() {
+			scheduler.shutdown();
+			System.out.println("🔔 Reservation notification service stopped");
+		}
+
+		private void notifyReservers() {
+			System.out.println("🔔 Checking for reservation notifications...");
+
+			Map<String, List<BookReservation>> allReservations = librarySystem.getBookReservations();
+			if (allReservations == null || allReservations.isEmpty()) {
+				return;
+			}
+
+			int notificationCount = 0;
+
+			for (Map.Entry<String, List<BookReservation>> entry : allReservations.entrySet()) {
+				String isbn = entry.getKey();
+				List<BookReservation> reservations = entry.getValue();
+
+				if (reservations != null && !reservations.isEmpty()) {
+					// Check if book is available now
+					BookItem book = librarySystem.searchBookByISBN(isbn);
+					if (book != null && book.getBookStatus() == BookStatus.AVAILABLE) {
+						// Notify the first person in reservation queue
+						BookReservation firstReservation = reservations.get(0);
+						if (firstReservation.getReservationStatus() == ReservationStatus.WAITING) {
+							notifyReserver(firstReservation, book);
+							notificationCount++;
+						}
+					}
+
+					// Check for expired reservations
+					checkAndRemoveExpiredReservations(reservations, isbn);
+				}
+			}
+
+			System.out.println("🔔 Sent " + notificationCount + " reservation notifications");
+		}
+
+		private void notifyReserver(BookReservation reservation, BookItem book) {
+			String memberId = reservation.getMemberId();
+			String message = String.format(
+					"📚 Reservation Ready: Book '%s' (ISBN: %s) is now available for pickup! "
+							+ "Please collect within 24 hours.",
+					book.getTitle(), book.getISBN());
+
+			// Send notification
+			sendNotification(memberId, message);
+
+			// Update reservation status
+			reservation.setReservationStatus(ReservationStatus.NOTIFIED);
+			reservation.setNotificationDate(new Date());
+
+			System.out.println("✅ Notified member " + memberId + " about available book: " + book.getTitle());
+		}
+
+		private void checkAndRemoveExpiredReservations(List<BookReservation> reservations, String isbn) {
+			Iterator<BookReservation> iterator = reservations.iterator();
+			while (iterator.hasNext()) {
+				BookReservation reservation = iterator.next();
+				if (isReservationExpired(reservation)) {
+					// Notify member about expiration
+					notifyReservationExpired(reservation);
+					iterator.remove();
+					System.out.println("🗑️ Removed expired reservation for member " + reservation.getMemberId());
+				}
+			}
+
+			// Clean up empty reservation list
+			if (reservations.isEmpty()) {
+				librarySystem.getBookReservations().remove(isbn);
+			}
+		}
+
+//		private boolean isReservationExpired(BookReservation reservation) {
+//			Date expiryDate = reservation.getReservationExpiryDate();
+//			return expiryDate != null && new Date().after(expiryDate);
+//		}
+//
+//		private void notifyReservationExpired(BookReservation reservation) {
+//			String message = "⏰ Reservation Expired: Your book reservation has expired. "
+//					+ "You can place a new reservation if the book is still unavailable.";
+//			sendNotification(reservation.getMemberId(), message);
+//		}
+
+//		private void sendNotification(String memberId, String message) {
+//			// Implementation depends on your notification system
+//			// This could be email, SMS, in-app notification, etc.
+//
+//			System.out.println("✉️ Notification to " + memberId + ": " + message);
+//
+//			// Example implementations:
+//			// emailService.sendEmail(memberId, "Library Reservation Update", message);
+//			// smsService.sendSMS(memberId, message);
+//			// notificationRepository.save(new Notification(memberId, message, new Date()));
+//		}
+	}
+}
